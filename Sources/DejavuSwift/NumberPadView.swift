@@ -6,12 +6,9 @@ public struct NumberPadView: View {
             value = Int(input) ?? 0
         }
     }
+
     @Binding var value:Int
 
-    public init(value:Int){
-        self.value = value
-    }
-    
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible()),
@@ -78,7 +75,7 @@ public struct NumberPadView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity)
                         .frame(height:60)
-                        .background(Color.gray)
+                        .background(Dejavu.brand)
                         .foregroundColor(.white)
                         .cornerRadius(4)
                 }
@@ -95,6 +92,9 @@ public struct NumberPadView: View {
             input = number
         } else {
             input += number
+        }
+        if Int(input) ?? 0 > 9999999 {
+            input = "9999999"
         }
     }
     
