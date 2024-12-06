@@ -18,7 +18,7 @@ public struct NumberPadView: View {
         GridItem(.flexible())
     ]
     
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 20) {
             // Display for entered number
             Text(input)
