@@ -9,8 +9,12 @@ public struct AvatarView : View {
     }
     
     public var body: some View {
-        AsyncImage(url: url) {
-            $0.image?.resizable()
+        if #available(iOS 15.0, *) {
+            AsyncImage(url: url) {
+                $0.image?.resizable()
+            }
+        } else {
+            
         }
     }
 }
