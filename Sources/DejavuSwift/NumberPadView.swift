@@ -1,12 +1,16 @@
 import SwiftUI
 
-struct NumberPadView: View {
+public struct NumberPadView: View {
     @State private var input = "0" {
         didSet {
             value = Int(input) ?? 0
         }
     }
     @Binding var value:Int
+
+    public init(value:Int){
+        self.value = value
+    }
     
     let columns = [
         GridItem(.flexible()),
