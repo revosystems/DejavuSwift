@@ -1,19 +1,23 @@
 import SwiftUI
 
 public struct NumberPadView: View {
-    @State private var input = "0" {
+    @Binding var value:Int
+    @State private var input:String = "0" {
         didSet {
             value = Int(input) ?? 0
         }
     }
-
-    @Binding var value:Int
-
+    
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
+    
+    public init(value: Binding<Int>, input: String = "0") {
+        self._value = value
+        self._input = State(initialValue: input)
+    }
     
     public var body: some View {
         VStack(spacing: 20) {
@@ -111,5 +115,11 @@ public struct NumberPadView: View {
 }
 
 #Preview {
-    NumberPadView(value: .constant(0))
+    struct Preview : View {
+        @State var value:Int = 0
+        var body: some View {
+            NumberPadView(value: $value)
+        }
+    }
+    return Preview()
 }
