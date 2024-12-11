@@ -1,4 +1,6 @@
 import SwiftUI
+import CryptoKit
+import Foundation
 
 public struct AvatarView : View {
 
@@ -6,6 +8,10 @@ public struct AvatarView : View {
     
     public init(url: URL?) {
         self.url = url
+    }
+    
+    public init(gravatar email:String?, size:Int? = nil, defaultImage:String? = nil){
+        self.url = Self.gravatar(email: email, size: size, defaultImage: defaultImage)
     }
     
     public var body: some View {
@@ -28,11 +34,37 @@ public struct AvatarView : View {
             }
         }
     }
+    
+    public static func gravatar(email:String?, size:Int? = nil, defaultImage:String? = nil) -> URL?{
+        guard let email else {
+            return nil
+        }
+        
+        var params:[String] = []
+        
+        if let size = size {
+            params.append("s=\(size)")
+        }
+        
+        if let defaultImage = defaultImage {
+            params.append("d=\(defaultImage)")
+        }
+        
+        let data = email.replacingOccurrences(of: " ", with: "").lowercased().data(using: .utf8)!
+        let hash = Insecure.MD5.hash(data: data).map { String(format: "%02hhx", $0) }.joined()
+        let url = "https://www.gravatar.com/avatar/\(hash)?\(params.joined(separator: "&"))"
+        return URL(string: url)
+    }
 }
 
 
 #Preview {
-    AvatarView(
-        url: URL("https://hws.dev/paul.jpg")
-    )
+    VStack{
+        AvatarView(
+            url: URL("https://hws.dev/paul.jpg")
+        )
+        AvatarView(
+            gravatar: "jordi@gloobus.net", size:200
+        )
+    }
 }
