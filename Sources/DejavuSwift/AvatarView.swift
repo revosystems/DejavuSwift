@@ -5,7 +5,7 @@ public struct AvatarView : View {
     let url:URL?
     let fallback:URL?
     
-    public init(url: URL?, fallback:URL?) {
+    public init(url: URL?, fallback:URL? = nil) {
         self.url = url
         self.fallback = fallback
     }
@@ -19,8 +19,10 @@ public struct AvatarView : View {
                 case .success(let image):
                     image.resizable()
                 case .failure:
-                    AsyncImage(url: self.fallback) {
-                        $0.image?.resizable()
+                    if let fallback {
+                        AsyncImage(url: fallback) {
+                            $0.image?.resizable()
+                        }
                     }
                 @unknown default:
                     // Since the AsyncImagePhase enum isn't frozen,

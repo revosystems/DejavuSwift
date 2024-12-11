@@ -34,7 +34,9 @@ public struct TagsView : View {
                                 .foregroundColor(tag.foregroundColor)
                         }
                         if let image = tag.image {
-                            image.foregroundColor(tag.foregroundColor)
+                            image
+                                .foregroundColor(tag.foregroundColor)
+                                .frame(width: 12, height: 12)
                         }
                         Text(tag.text)
                             .foregroundColor(tag.foregroundColor)
