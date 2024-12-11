@@ -3,11 +3,9 @@ import SwiftUI
 public struct AvatarView : View {
 
     let url:URL?
-    let fallback:URL?
     
-    public init(url: URL?, fallback:URL? = nil) {
+    public init(url: URL?) {
         self.url = url
-        self.fallback = fallback
     }
     
     public var body: some View {
@@ -19,11 +17,7 @@ public struct AvatarView : View {
                 case .success(let image):
                     image.resizable()
                 case .failure:
-                    if let fallback {
-                        AsyncImage(url: fallback) {
-                            $0.image?.resizable()
-                        }
-                    }
+                    Dejavu.image("default-avatar")
                 @unknown default:
                     // Since the AsyncImagePhase enum isn't frozen,
                     // we need to add this currently unused fallback
@@ -39,7 +33,6 @@ public struct AvatarView : View {
 
 #Preview {
     AvatarView(
-        url: URL("https://hws.dev/paul.jpg"),
-        fallback: URL("https://raw.githubusercontent.com/BadChoice/handesk/dev/public/images/default-avatar.png")
+        url: URL("https://hws.dev/paul.jpg")
     )
 }

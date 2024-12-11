@@ -37,7 +37,7 @@ public struct TagsView : View {
                             image
                                 .resizable()
                                 .foregroundColor(tag.foregroundColor)
-                                .frame(width: 20, height: 20)
+                                .frame(width: 18, height: 18)
                         }
                         Text(tag.text)
                             .foregroundColor(tag.foregroundColor)
