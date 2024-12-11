@@ -2,13 +2,17 @@ import SwiftUI
 
 public struct Tag {
     let icon:String?
+    let image:Image?
     let text:String
     let color:Color?
+    let foregroundColor:Color
     
-    public init(icon:String?, text:String, color:Color?){
+    public init(icon:String? = nil, image:Image? = nil, text:String, color:Color?, foregroundColor:Color = .white){
         self.icon = icon
+        self.image = image
         self.text = text
         self.color = color
+        self.foregroundColor = foregroundColor
     }
 }
 
@@ -27,10 +31,13 @@ public struct TagsView : View {
                     HStack {
                         if let icon = tag.icon {
                             Image(systemName: icon)
-                                .foregroundColor(.white)
+                                .foregroundColor(tag.foregroundColor)
+                        }
+                        if let image = tag.image {
+                            image.foregroundColor(tag.foregroundColor)
                         }
                         Text(tag.text)
-                            .foregroundColor(.white)
+                            .foregroundColor(tag.foregroundColor)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -49,7 +56,8 @@ public struct TagsView : View {
         Tag(icon: "person.fill", text: "Patata 1", color: Color("Brand")),
         Tag(icon: "star.fill", text: "Patata 2", color: .red),
         Tag(icon: "leaf.fill", text: "Patata 3", color: .blue),
-        Tag(icon: nil, text: "Patata 4", color: .green),
+        Tag(text: "Patata 4", color: .green, foregroundColor: .black),
+        Tag(image: Image(systemName: "person.fill"), text: "Patata 4.1", color: .green, foregroundColor: .black),
         Tag(icon: "flame.fill", text: "Patata 5", color: .orange)
     ])
 }
