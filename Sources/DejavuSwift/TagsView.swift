@@ -35,8 +35,9 @@ public struct TagsView : View {
                         }
                         if let image = tag.image {
                             image
+                                .resizable()
                                 .foregroundColor(tag.foregroundColor)
-                                .frame(width: 12, height: 12)
+                                .frame(width: 20, height: 20)
                         }
                         Text(tag.text)
                             .foregroundColor(tag.foregroundColor)
@@ -55,11 +56,13 @@ public struct TagsView : View {
 
 #Preview {
     TagsView(tags: [
-        Tag(icon: "person.fill", text: "Patata 1", color: Color("Brand")),
+        Tag(image: Dejavu.image("allergens-1"), text: "Allergen", color:.purple),
+        Tag(icon: "person.fill", text: "Patata 1", color: Dejavu.brand),
         Tag(icon: "star.fill", text: "Patata 2", color: .red),
         Tag(icon: "leaf.fill", text: "Patata 3", color: .blue),
         Tag(text: "Patata 4", color: .green, foregroundColor: .black),
         Tag(image: Image(systemName: "person.fill"), text: "Patata 4.1", color: .green, foregroundColor: .black),
-        Tag(icon: "flame.fill", text: "Patata 5", color: .orange)
+        Tag(icon: "flame.fill", text: "Patata 5", color: .orange),
+        
     ])
 }

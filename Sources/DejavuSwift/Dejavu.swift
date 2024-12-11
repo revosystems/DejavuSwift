@@ -37,4 +37,8 @@ public class Dejavu {
     public static var textTernary : Color {
         Color("text-ternary", bundle: self.bundle)
     }
+    
+    public static func image(_ name:String) -> Image? {
+        Image(name, bundle: self.bundle)
+    }
 }
