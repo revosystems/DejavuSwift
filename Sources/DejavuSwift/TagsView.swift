@@ -48,7 +48,6 @@ public struct TagsView : View {
                     .cornerRadius(8)
                 }
             }
-            .padding()
         }
     }
 }

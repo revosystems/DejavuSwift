@@ -38,6 +38,17 @@ public class Dejavu {
         Color("text-ternary", bundle: self.bundle)
     }
     
+    public static var background : Color {
+        Color("background", bundle: self.bundle)
+    }
+    
+    public static var backgroundDarker : Color {
+        Color("background-darker", bundle: self.bundle)
+    }
+    
+    public static var backgroundTag : Color {
+        Color("background-tag", bundle: self.bundle)
+    }
     public static func image(_ name:String) -> Image? {
         Image(name, bundle: self.bundle)
     }
