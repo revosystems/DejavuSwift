@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 public extension Color {
     public func luminance() -> Double {
