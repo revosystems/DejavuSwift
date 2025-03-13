@@ -1,10 +1,15 @@
 import SwiftUI
 
 public struct NumberPadView: View {
-    @Binding var value:Int
-    @State private var input:String = "0" {
+    
+    let confirm: ((Double) -> Void)?
+    
+    @Binding var value: Double
+    let allowDecimals: Bool
+    
+    @State private var input: String = "0" {
         didSet {
-            value = Int(input) ?? 0
+            value = formatValue()
         }
     }
     
@@ -14,22 +19,22 @@ public struct NumberPadView: View {
         GridItem(.flexible())
     ]
     
-    public init(value: Binding<Int>, input: String = "0") {
+    public init(value: Binding<Double>, allowDecimals: Bool = false, confirm: ((Double) -> Void)? = nil) {
         self._value = value
-        self._input = State(initialValue: input)
+        self.allowDecimals = allowDecimals
+        self._input = State(initialValue: allowDecimals ? "000" : "0")
+        self.confirm = confirm
     }
     
     public var body: some View {
         VStack(spacing: 20) {
-            // Display for entered number
-            Text(input)
+            Text(formatDisplay())
                 .font(.largeTitle)
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
             
-            // Number pad buttons
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(1...9, id: \.self) { number in
                     Button(action: {
@@ -38,50 +43,49 @@ public struct NumberPadView: View {
                         Text("\(number)")
                             .font(.title)
                             .frame(maxWidth: .infinity)
-                            .frame(height:60)
+                            .frame(height: 60)
                             .background(Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(4)
                     }
                 }
                 
-                // Backspace button
                 Button(action: {
                     removeNumber()
                 }) {
                     Image(systemName: "delete.left")
                         .font(.title)
                         .frame(maxWidth: .infinity)
-                        .frame(height:60)
+                        .frame(height: 60)
                         .background(Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(4)
                 }
                 
-                // Zero button
                 Button(action: {
                     addNumber("0")
                 }) {
                     Text("0")
                         .font(.title)
                         .frame(maxWidth: .infinity)
-                        .frame(height:60)
+                        .frame(height: 60)
                         .background(Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(4)
                 }
                 
-                // Confirm button
-                Button(action: {
-                    confirmInput()
-                }) {
-                    Image(systemName: "checkmark")
-                        .font(.title)
-                        .frame(maxWidth: .infinity)
-                        .frame(height:60)
-                        .background(Dejavu.brand)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
+                if (confirm != nil) {
+                    Button(action: {
+                        confirmInput()
+                    }) {
+                        Image(systemName: "checkmark")
+                            .font(.title)
+                            .frame(maxWidth: .infinity)
+                            .frame(height:60)
+                            .background(Dejavu.brand)
+                            .foregroundColor(.white)
+                            .cornerRadius(4)
+                    }
                 }
                 
             }
@@ -92,33 +96,66 @@ public struct NumberPadView: View {
     }
     
     private func addNumber(_ number: String) {
-        if input == "0" {
-            input = number
-        } else {
+        if !allowDecimals {
+            if input == "0" {
+                input = number
+                return
+            }
+            
             input += number
         }
-        if Int(input) ?? 0 > 9999999 {
-            input = "9999999"
+        
+        if input.count < 10 {
+            input.append(number)
+            input = String(input.suffix(10)) // Manté màxim 10 digits
         }
     }
     
     private func removeNumber() {
-        input = String(input.dropLast())
-        if input.isEmpty {
-            input = "0"
+        if !allowDecimals {
+            input = String(input.dropLast())
+            if input.isEmpty { input = "0" }
+            
+            return
         }
+        
+        input = "0" + input.dropLast()
+        if input.count < 3 { input = "000" }
+    }
+    
+    private func formatValue() -> Double {
+        if !allowDecimals {
+            return Double(input) ?? 0
+        }
+            
+        return (Double(input) ?? 0) / 100.0
+    }
+    
+    private func formatDisplay() -> String {
+        let number = formatValue()
+        return allowDecimals ? String(format: "%.2f", number) : String(Int(number))
     }
     
     private func confirmInput() {
-        // Handle confirmation action here
+        confirm!(value)
     }
 }
 
 #Preview {
-    struct Preview : View {
-        @State var value:Int = 0
+    struct Preview: View {
+        @State var value1: Double = 0.0
+        @State var value2: Double = 0.0
+        
         var body: some View {
-            NumberPadView(value: $value)
+            VStack {
+                Text("Mode Decimals")
+                NumberPadView(value: $value1, allowDecimals: true)
+                
+//                Divider()
+//                
+//                Text("Mode Enters")
+//                NumberPadView(value: $value2, allowDecimals: false)
+            }
         }
     }
     return Preview()
