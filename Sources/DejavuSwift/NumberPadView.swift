@@ -7,7 +7,7 @@ public struct NumberPadView: View {
     @Binding var value: Double
     let allowDecimals: Bool
     
-    @State private var input: String = "0" {
+    @State private var input: String {
         didSet {
             value = formatValue()
         }
@@ -22,8 +22,8 @@ public struct NumberPadView: View {
     public init(value: Binding<Double>, allowDecimals: Bool = false, confirm: ((Double) -> Void)? = nil) {
         self._value = value
         self.allowDecimals = allowDecimals
-        self._input = State(initialValue: allowDecimals ? "000" : "0")
         self.confirm = confirm
+        self._input = State(initialValue: Self.formatInitialValue(value.wrappedValue, allowDecimals: allowDecimals))
     }
     
     public var body: some View {
@@ -34,6 +34,9 @@ public struct NumberPadView: View {
                 .frame(maxWidth: .infinity)
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
+                .onAppear {
+                    input = Self.formatInitialValue(value, allowDecimals: allowDecimals)
+                }
             
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(1...9, id: \.self) { number in
@@ -87,7 +90,6 @@ public struct NumberPadView: View {
                             .cornerRadius(4)
                     }
                 }
-                
             }
             .frame(maxWidth: .infinity)
             Spacer()
@@ -136,24 +138,32 @@ public struct NumberPadView: View {
     }
     
     private func confirmInput() {
-        confirm!(value)
+        confirm?(value)
+    }
+    
+    private static func formatInitialValue(_ value: Double, allowDecimals: Bool) -> String {
+        if allowDecimals {
+            return String(format: "%03d", Int(value * 100))
+        } else {
+            return String(Int(value))
+        }
     }
 }
 
 #Preview {
     struct Preview: View {
-        @State var value1: Double = 0.0
-        @State var value2: Double = 0.0
+        @State var value1: Double = 12.34
+        @State var value2: Double = 56.0
         
         var body: some View {
             VStack {
                 Text("Mode Decimals")
                 NumberPadView(value: $value1, allowDecimals: true)
                 
-//                Divider()
-//                
-//                Text("Mode Enters")
-//                NumberPadView(value: $value2, allowDecimals: false)
+                Divider()
+                
+                Text("Mode Enters")
+                NumberPadView(value: $value2, allowDecimals: false)
             }
         }
     }
