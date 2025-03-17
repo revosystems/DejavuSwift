@@ -92,7 +92,6 @@ public struct NumberPadView: View {
             .frame(maxWidth: .infinity)
             Spacer()
         }
-        .padding()
     }
     
     private func addNumber(_ number: String) {
