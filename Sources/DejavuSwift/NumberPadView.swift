@@ -1,13 +1,18 @@
 import SwiftUI
 
+public enum NumberPadMode {
+    case integer, price, decimal
+}
+
 public struct NumberPadView: View {
     
     let confirm: ((Double) -> Void)?
     
     @Binding var value: Double
-    let allowDecimals: Bool
+    let mode: NumberPadMode
+    private var hasDecimalPoint: Bool { input.contains(".") }
     
-    @State private var input: String {
+    @State private var input: String = "0" {
         didSet {
             value = formatValue()
         }
@@ -19,11 +24,10 @@ public struct NumberPadView: View {
         GridItem(.flexible())
     ]
     
-    public init(value: Binding<Double>, allowDecimals: Bool = false, confirm: ((Double) -> Void)? = nil) {
+    public init(value: Binding<Double>, mode: NumberPadMode = .integer, confirm: ((Double) -> Void)? = nil) {
         self._value = value
-        self.allowDecimals = allowDecimals
+        self.mode = mode
         self.confirm = confirm
-        self._input = State(initialValue: Self.formatInitialValue(value.wrappedValue, allowDecimals: allowDecimals))
     }
     
     public var body: some View {
@@ -35,7 +39,7 @@ public struct NumberPadView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
                 .onAppear {
-                    input = Self.formatInitialValue(value, allowDecimals: allowDecimals)
+                    input = Self.formatInitialValue(value, mode: mode)
                 }
             
             LazyVGrid(columns: columns, spacing: 16) {
@@ -46,9 +50,9 @@ public struct NumberPadView: View {
                         Text("\(number)")
                             .font(.title)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 60)
-                            .background(Color.gray)
-                            .foregroundColor(.white)
+                            .frame(height:60)
+                            .background(Dejavu.tableBackground)
+                            .foregroundColor(Dejavu.textPrimary)
                             .cornerRadius(4)
                     }
                 }
@@ -59,9 +63,9 @@ public struct NumberPadView: View {
                     Image(systemName: "delete.left")
                         .font(.title)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .frame(height:60)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
                 }
                 
@@ -71,10 +75,22 @@ public struct NumberPadView: View {
                     Text("0")
                         .font(.title)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .frame(height:60)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
+                }
+                
+                if mode == .decimal {
+                    Button(action: { addNumber(".") }) {
+                        Text(".")
+                            .font(.title)
+                            .frame(maxWidth: .infinity)
+                            .frame(height:60)
+                            .background(Dejavu.tableBackground)
+                            .foregroundColor(Dejavu.textPrimary)
+                            .cornerRadius(4)
+                    }
                 }
                 
                 if (confirm != nil) {
@@ -97,55 +113,60 @@ public struct NumberPadView: View {
     }
     
     private func addNumber(_ number: String) {
-        if !allowDecimals {
-            if input == "0" {
-                input = number
-                return
-            }
+        switch mode {
+        case .integer:
+            if input == "0" { input = number }
+            else { input += number }
             
-            input += number
+        case .price:
+            input = (input + number).replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+            while input.count < 3 { input = "0" + input }
+            
+        case .decimal:
+            if number == "." && !hasDecimalPoint {
+                input += "."
+            } else if number != "." {
+                input += number
+            }
         }
         
-        if input.count < 10 {
-            input.append(number)
-            input = String(input.suffix(10)) // Manté màxim 10 digits
-        }
+        value = formatValue()
     }
     
     private func removeNumber() {
-        if !allowDecimals {
-            input = String(input.dropLast())
-            if input.isEmpty { input = "0" }
-            
-            return
+        if input.count > 1 {
+            input.removeLast()
+        } else {
+            input = "0"
         }
-        
-        input = "0" + input.dropLast()
-        if input.count < 3 { input = "000" }
+        value = formatValue()
     }
     
     private func formatValue() -> Double {
-        if !allowDecimals {
-            return Double(input) ?? 0
+        switch mode {
+        case .integer: Double(input) ?? 0
+        case .price  : (Double(input) ?? 0) / 100.0
+        case .decimal: Double(input) ?? 0.0
         }
-            
-        return (Double(input) ?? 0) / 100.0
     }
     
     private func formatDisplay() -> String {
-        let number = formatValue()
-        return allowDecimals ? String(format: "%.2f", number) : String(Int(number))
+        switch mode {
+        case .integer:  String(Int(value))
+        case .price:    String(format: "%.2f", value)
+        case .decimal:  hasDecimalPoint ? String(format: "%.2f", value) : String(Int(value))
+        }
     }
     
     private func confirmInput() {
         confirm?(value)
     }
     
-    private static func formatInitialValue(_ value: Double, allowDecimals: Bool) -> String {
-        if allowDecimals {
-            return String(format: "%03d", Int(value * 100))
-        } else {
-            return String(Int(value))
+    private static func formatInitialValue(_ value: Double, mode: NumberPadMode) -> String {
+        switch mode {
+        case .integer:  String(Int(value))
+        case .price:    String(Int(value * 100))
+        case .decimal:  String(format: "%g", value)
         }
     }
 }
@@ -153,17 +174,23 @@ public struct NumberPadView: View {
 #Preview {
     struct Preview: View {
         @State var value1: Double = 12.34
-        @State var value2: Double = 56.0
+        @State var value2: Double = 2
+        @State var value3: Double = 4
         
         var body: some View {
             VStack {
+                Text("Mode Price")
+                NumberPadView(value: $value1, mode: .price)
+                
+                Divider()
+
                 Text("Mode Decimals")
-                NumberPadView(value: $value1, allowDecimals: true)
+                NumberPadView(value: $value2, mode: .decimal)
                 
                 Divider()
                 
                 Text("Mode Enters")
-                NumberPadView(value: $value2, allowDecimals: false)
+                NumberPadView(value: $value3, mode: .integer)
             }
         }
     }
