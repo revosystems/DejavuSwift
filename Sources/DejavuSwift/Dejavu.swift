@@ -45,6 +45,14 @@ public class Dejavu {
     public static var backgroundDarker : Color {
         Color("background-darker", bundle: self.bundle)
     }
+    
+    public static var brokenWhite: Color {
+        Color("broken-white", bundle: self.bundle)
+    }
+    
+    public static var tableBackground: Color {
+        Color("table-background", bundle: self.bundle)
+    }
 
     public static func image(_ name:String) -> Image? {
         Image(name, bundle: self.bundle)

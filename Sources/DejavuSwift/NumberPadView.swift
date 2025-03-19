@@ -39,8 +39,8 @@ public struct NumberPadView: View {
                             .font(.title)
                             .frame(maxWidth: .infinity)
                             .frame(height:60)
-                            .background(Color.gray)
-                            .foregroundColor(.white)
+                            .background(Dejavu.tableBackground)
+                            .foregroundColor(Dejavu.textPrimary)
                             .cornerRadius(4)
                     }
                 }
@@ -53,8 +53,8 @@ public struct NumberPadView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity)
                         .frame(height:60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
                 }
                 
@@ -66,8 +66,8 @@ public struct NumberPadView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity)
                         .frame(height:60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
                 }
                 
