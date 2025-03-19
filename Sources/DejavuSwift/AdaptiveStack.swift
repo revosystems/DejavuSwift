@@ -23,8 +23,7 @@ public struct AdaptiveStack<Content: View>: View {
                 HStack(alignment: verticalAlignment, spacing: spacing, content: content)
             }
         }
-    }
-    
+    }    
 }
 
 

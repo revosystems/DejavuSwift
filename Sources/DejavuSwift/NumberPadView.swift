@@ -1,10 +1,20 @@
 import SwiftUI
 
+public enum NumberPadMode {
+    case integer, price, decimal
+}
+
 public struct NumberPadView: View {
-    @Binding var value:Int
-    @State private var input:String = "0" {
+    
+    let confirm: ((Double) -> Void)?
+    
+    @Binding var value: Double
+    let mode: NumberPadMode
+    private var hasDecimalPoint: Bool { input.contains(".") }
+    
+    @State private var input: String = "0" {
         didSet {
-            value = Int(input) ?? 0
+            value = formatValue()
         }
     }
     
@@ -14,22 +24,24 @@ public struct NumberPadView: View {
         GridItem(.flexible())
     ]
     
-    public init(value: Binding<Int>, input: String = "0") {
+    public init(value: Binding<Double>, mode: NumberPadMode = .integer, confirm: ((Double) -> Void)? = nil) {
         self._value = value
-        self._input = State(initialValue: input)
+        self.mode = mode
+        self.confirm = confirm
     }
     
     public var body: some View {
         VStack(spacing: 20) {
-            // Display for entered number
-            Text(input)
+            Text(formatDisplay())
                 .font(.largeTitle)
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
+                .onAppear {
+                    input = Self.formatInitialValue(value, mode: mode)
+                }
             
-            // Number pad buttons
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(1...9, id: \.self) { number in
                     Button(action: {
@@ -39,13 +51,12 @@ public struct NumberPadView: View {
                             .font(.title)
                             .frame(maxWidth: .infinity)
                             .frame(height:60)
-                            .background(Color.gray)
-                            .foregroundColor(.white)
+                            .background(Dejavu.tableBackground)
+                            .foregroundColor(Dejavu.textPrimary)
                             .cornerRadius(4)
                     }
                 }
                 
-                // Backspace button
                 Button(action: {
                     removeNumber()
                 }) {
@@ -53,12 +64,11 @@ public struct NumberPadView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity)
                         .frame(height:60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
                 }
                 
-                // Zero button
                 Button(action: {
                     addNumber("0")
                 }) {
@@ -66,59 +76,122 @@ public struct NumberPadView: View {
                         .font(.title)
                         .frame(maxWidth: .infinity)
                         .frame(height:60)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
+                        .background(Dejavu.tableBackground)
+                        .foregroundColor(Dejavu.textPrimary)
                         .cornerRadius(4)
                 }
                 
-                // Confirm button
-                Button(action: {
-                    confirmInput()
-                }) {
-                    Image(systemName: "checkmark")
-                        .font(.title)
-                        .frame(maxWidth: .infinity)
-                        .frame(height:60)
-                        .background(Dejavu.brand)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
+                if mode == .decimal {
+                    Button(action: { addNumber(".") }) {
+                        Text(".")
+                            .font(.title)
+                            .frame(maxWidth: .infinity)
+                            .frame(height:60)
+                            .background(Dejavu.tableBackground)
+                            .foregroundColor(Dejavu.textPrimary)
+                            .cornerRadius(4)
+                    }
                 }
                 
+                if (confirm != nil) {
+                    Button(action: {
+                        confirmInput()
+                    }) {
+                        Image(systemName: "checkmark")
+                            .font(.title)
+                            .frame(maxWidth: .infinity)
+                            .frame(height:60)
+                            .background(Dejavu.brand)
+                            .foregroundColor(.white)
+                            .cornerRadius(4)
+                    }
+                }
             }
             .frame(maxWidth: .infinity)
             Spacer()
         }
-        .padding()
     }
     
     private func addNumber(_ number: String) {
-        if input == "0" {
-            input = number
-        } else {
-            input += number
+        switch mode {
+        case .integer:
+            if input == "0" { input = number }
+            else { input += number }
+            
+        case .price:
+            input = (input + number).replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+            while input.count < 3 { input = "0" + input }
+            
+        case .decimal:
+            if number == "." && !hasDecimalPoint {
+                input += "."
+            } else if number != "." {
+                input += number
+            }
         }
-        if Int(input) ?? 0 > 9999999 {
-            input = "9999999"
-        }
+        
+        value = formatValue()
     }
     
     private func removeNumber() {
-        input = String(input.dropLast())
-        if input.isEmpty {
+        if input.count > 1 {
+            input.removeLast()
+        } else {
             input = "0"
+        }
+        value = formatValue()
+    }
+    
+    private func formatValue() -> Double {
+        switch mode {
+        case .integer: Double(input) ?? 0
+        case .price  : (Double(input) ?? 0) / 100.0
+        case .decimal: Double(input) ?? 0.0
+        }
+    }
+    
+    private func formatDisplay() -> String {
+        switch mode {
+        case .integer:  String(Int(value))
+        case .price:    String(format: "%.2f", value)
+        case .decimal:  hasDecimalPoint ? String(format: "%.2f", value) : String(Int(value))
         }
     }
     
     private func confirmInput() {
-        // Handle confirmation action here
+        confirm?(value)
+    }
+    
+    private static func formatInitialValue(_ value: Double, mode: NumberPadMode) -> String {
+        switch mode {
+        case .integer:  String(Int(value))
+        case .price:    String(Int(value * 100))
+        case .decimal:  String(format: "%g", value)
+        }
     }
 }
 
 #Preview {
-    struct Preview : View {
-        @State var value:Int = 0
+    struct Preview: View {
+        @State var value1: Double = 12.34
+        @State var value2: Double = 2
+        @State var value3: Double = 4
+        
         var body: some View {
-            NumberPadView(value: $value)
+            VStack {
+                Text("Mode Price")
+                NumberPadView(value: $value1, mode: .price)
+                
+                Divider()
+
+                Text("Mode Decimals")
+                NumberPadView(value: $value2, mode: .decimal)
+                
+                Divider()
+                
+                Text("Mode Enters")
+                NumberPadView(value: $value3, mode: .integer)
+            }
         }
     }
     return Preview()
