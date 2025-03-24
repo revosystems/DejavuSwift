@@ -61,7 +61,7 @@ public struct AvatarView : View {
 #Preview {
     VStack{
         AvatarView(
-            url: URL("https://hws.dev/paul.jpg")
+            url: URL(string:"https://hws.dev/paul.jpg")
         )
         AvatarView(
             gravatar: "jordi@gloobus.net", size:200
