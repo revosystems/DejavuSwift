@@ -33,16 +33,16 @@ public struct NumberPadView: View {
     public var body: some View {
         VStack(spacing: 20) {
             Text(formatDisplay())
-                .font(.largeTitle)
+                .font(.system(size: 54, weight: .light))
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color.gray.opacity(0.2))
+                //.background(Color.gray.opacity(0.2))
                 .cornerRadius(4)
                 .onAppear {
                     input = Self.formatInitialValue(value, mode: mode)
                 }
             
-            LazyVGrid(columns: columns, spacing: 16) {
+            LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(1...9, id: \.self) { number in
                     Button(action: {
                         addNumber(String(number))
@@ -93,6 +93,9 @@ public struct NumberPadView: View {
                     }
                 }
                 
+                if mode == .decimal {
+                    Spacer()
+                }
                 if (confirm != nil) {
                     Button(action: {
                         confirmInput()
@@ -101,10 +104,13 @@ public struct NumberPadView: View {
                             .font(.title)
                             .frame(maxWidth: .infinity)
                             .frame(height:60)
-                            .background(Dejavu.brand)
+                            .background(Dejavu.textPrimary)
                             .foregroundColor(.white)
                             .cornerRadius(4)
                     }
+                }
+                if mode == .decimal {
+                    Spacer()
                 }
             }
             .frame(maxWidth: .infinity)
@@ -178,19 +184,21 @@ public struct NumberPadView: View {
         @State var value3: Double = 4
         
         var body: some View {
-            VStack {
-                Text("Mode Price")
-                NumberPadView(value: $value1, mode: .price)
-                
-                Divider()
-
-                Text("Mode Decimals")
-                NumberPadView(value: $value2, mode: .decimal)
-                
-                Divider()
-                
-                Text("Mode Enters")
-                NumberPadView(value: $value3, mode: .integer)
+            ScrollView {
+                VStack {
+                    Text("Mode Price")
+                    NumberPadView(value: $value1, mode: .price) { value in }
+                    
+                    Divider()
+                    
+                    Text("Mode Decimals")
+                    NumberPadView(value: $value2, mode: .decimal) { value in }
+                    
+                    Divider()
+                    
+                    Text("Mode Enters")
+                    NumberPadView(value: $value3, mode: .integer) { value in }
+                }.padding()
             }
         }
     }
