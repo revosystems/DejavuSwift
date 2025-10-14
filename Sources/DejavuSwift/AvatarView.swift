@@ -19,7 +19,7 @@ public struct AvatarView : View {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .empty:
-                    ProgressView()
+                    Dejavu.image("default-avatar")
                 case .success(let image):
                     image.resizable()
                 case .failure:
@@ -63,8 +63,13 @@ public struct AvatarView : View {
         AvatarView(
             url: URL(string:"https://hws.dev/paul.jpg")
         )
+        
         AvatarView(
             gravatar: "jordi@gloobus.net", size:200
         )
-    }
+        
+        AvatarView(
+            gravatar: nil, size:200
+        )
+    }.padding(8)
 }

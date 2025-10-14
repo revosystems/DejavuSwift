@@ -1,7 +1,9 @@
+#if(canImport(UIKit))
 import SwiftUI
+import UIKit
 
 public extension Color {
-    public func luminance() -> Double {
+    func luminance() -> Double {
         let uiColor = UIColor(self)
         
         var red: CGFloat = 0
@@ -12,11 +14,12 @@ public extension Color {
         return 0.2126 * Double(red) + 0.7152 * Double(green) + 0.0722 * Double(blue)
     }
     
-    public func isLight() -> Bool {
+    func isLight() -> Bool {
         return luminance() > 0.5
     }
     
-    public func contrastedTextColor() -> Color {
+    func contrastedTextColor() -> Color {
         return isLight() ? Color.black : Color.white
     }
 }
+#endif
