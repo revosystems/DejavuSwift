@@ -10,6 +10,7 @@ public struct NumberPadView: View {
     
     @Binding var value: Double
     let mode: NumberPadMode
+    let maxDigits: Int?
     private var hasDecimalPoint: Bool { input.contains(".") }
     
     @State private var input: String = "0" {
@@ -24,9 +25,15 @@ public struct NumberPadView: View {
         GridItem(.flexible())
     ]
     
-    public init(value: Binding<Double>, mode: NumberPadMode = .integer, confirm: ((Double) -> Void)? = nil) {
+    public init(
+        value: Binding<Double>,
+        mode: NumberPadMode = .integer,
+        maxDigits: Int? = nil,
+        confirm: ((Double) -> Void)? = nil
+    ) {
         self._value = value
         self.mode = mode
+        self.maxDigits = maxDigits
         self.confirm = confirm
     }
     
@@ -119,6 +126,8 @@ public struct NumberPadView: View {
     }
     
     private func addNumber(_ number: String) {
+        guard canAddNumber(number) else { return }
+        
         switch mode {
         case .integer:
             if input == "0" { input = number }
@@ -175,6 +184,17 @@ public struct NumberPadView: View {
         case .decimal:  String(format: "%g", value)
         }
     }
+    
+    private func canAddNumber(_ char: String) -> Bool {
+        guard let maxDigits else { return true }
+        
+        if mode == .integer {
+            return input.count <= maxDigits
+        } else {
+            return input.count <= maxDigits + 1
+        }
+    }
+    
 }
 
 #Preview {
@@ -187,17 +207,17 @@ public struct NumberPadView: View {
             ScrollView {
                 VStack {
                     Text("Mode Price")
-                    NumberPadView(value: $value1, mode: .price) { value in }
+                    NumberPadView(value: $value1, mode: .price, maxDigits: 10) { value in }
                     
                     Divider()
                     
                     Text("Mode Decimals")
-                    NumberPadView(value: $value2, mode: .decimal) { value in }
+                    NumberPadView(value: $value2, mode: .decimal, maxDigits: 10) { value in }
                     
                     Divider()
                     
                     Text("Mode Enters")
-                    NumberPadView(value: $value3, mode: .integer) { value in }
+                    NumberPadView(value: $value3, mode: .integer, maxDigits: 10) { value in }
                 }.padding()
             }
         }
