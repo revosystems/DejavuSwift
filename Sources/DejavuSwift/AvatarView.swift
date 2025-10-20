@@ -18,21 +18,18 @@ public struct AvatarView : View {
         if #available(iOS 15.0, *) {
             AsyncImage(url: url) { phase in
                 switch phase {
-                case .empty:
-                    Dejavu.image("default-avatar")
-                case .success(let image):
-                    image.resizable()
-                case .failure:
-                    Dejavu.image("default-avatar")
-                @unknown default:
-                    // Since the AsyncImagePhase enum isn't frozen,
-                    // we need to add this currently unused fallback
-                    // to handle any new cases that might be added
-                    // in the future:
-                    EmptyView()
+                case .empty: defaultAvatar
+                case .success(let image): image.resizable()
+                case .failure: defaultAvatar
+                @unknown default:  defaultAvatar    // For possible future changes in AsyncImage
                 }
             }
         }
+    }
+    
+    var defaultAvatar: some View {
+        Dejavu.image("default-avatar")?
+            .resizable()
     }
     
     public static func gravatar(email:String?, size:Int? = nil, defaultImage:String? = nil) -> URL?{
@@ -62,14 +59,14 @@ public struct AvatarView : View {
     VStack{
         AvatarView(
             url: URL(string:"https://hws.dev/paul.jpg")
-        )
+        ).frame(width: 50, height:50)
         
         AvatarView(
             gravatar: "jordi@gloobus.net", size:200
-        )
+        ).frame(width: 50, height:50)
         
         AvatarView(
             gravatar: nil, size:200
-        )
+        ).frame(width: 50, height:50)
     }.padding(8)
 }
