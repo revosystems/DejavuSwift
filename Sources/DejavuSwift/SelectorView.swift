@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 @available(iOS 15.0, *)
-public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
+public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     // MARK: - Properties
     
@@ -22,15 +22,13 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
     
     let searchFilter: ((Item, String) -> Bool)?
     
-    let searchPlaceholder: String?
+    let searchPlaceholder: String
     
     let selectedRowColor: Color
     
     // MARK: - State
     
     @State private var searchText: String = ""
-    @SwiftUI.Environment(\.dismiss) private var dismiss
-    @SwiftUI.Environment(\.presentationMode) private var presentationMode
     
     // MARK: - Computed Properties
     
@@ -46,36 +44,6 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
         return allItems.filter {
             titleBlock($0).lowercased().contains(searchText.lowercased())
         }
-    }
-    
-    private var shouldShowBackButton: Bool {
-        guard isIpad(),
-              let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first,
-              let rootVC = window.rootViewController else {
-            return false
-        }
-        
-        if let navController = findNavigationController(in: rootVC),
-           navController.viewControllers.count > 1 {
-            if navController.viewControllers.contains(where: { $0 is UIHostingController<DejavuSelectorView<Item>> }) {
-                return true
-            }
-        }
-        
-        return false
-    }
-    
-    private func findNavigationController(in viewController: UIViewController) -> UINavigationController? {
-        if let nav = viewController as? UINavigationController {
-            return nav
-        }
-        for child in viewController.children {
-            if let nav = findNavigationController(in: child) {
-                return nav
-            }
-        }
-        return nil
     }
     
     public init(
@@ -97,7 +65,7 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
         self.iconBlock = iconBlock
         self.leftIconBlock = leftIconBlock
         self.searchFilter = searchFilter
-        self.searchPlaceholder = searchPlaceholder
+        self.searchPlaceholder = searchPlaceholder ?? __("search")
         self.selectedRowColor = selectedRowColor ?? .blue
         self.onSelection = onSelection
     }
@@ -107,8 +75,6 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
     public var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                searchBar
-                
                 if filteredItems.isEmpty {
                     emptyStateView
                 } else {
@@ -117,24 +83,11 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    cancelButton
-                }
-            }
+            .searchable(text: $searchText, prompt: searchPlaceholder)
         }
     }
     
     // MARK: - Subviews
-    
-    private var searchBar: some View {
-        SearchBar(
-            text: $searchText,
-            placeholder: searchPlaceholder,
-        )
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-    }
     
     private var itemsList: some View {
         List(filteredItems) { item in
@@ -147,7 +100,8 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
                 selectedRowColor: selectedRowColor
             )
             .onTapGesture {
-                handleSelection(item)
+                selectedItem = item
+                onSelection(item)
             }
         }
         .listStyle(.plain)
@@ -165,50 +119,6 @@ public struct DejavuSelectorView<Item: Equatable & Identifiable>: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
-    }
-    
-    @ViewBuilder
-    private var cancelButton: some View {
-        if shouldShowBackButton {
-            Button(action: {
-                if let topVC = findTopViewController() {
-                    topVC.dismiss(animated: true)
-                } else {
-                    presentationMode.wrappedValue.dismiss()
-                }
-            }) {
-                Text("Back")
-                    .foregroundColor(.primary)
-            }
-        }
-    }
-    
-    // MARK: - Actions
-    
-    private func handleSelection(_ item: Item) {
-        selectedItem = item
-        onSelection(item)
-        DispatchQueue.main.async {
-            if let topVC = findTopViewController() {
-                topVC.dismiss(animated: true)
-            } else {
-                presentationMode.wrappedValue.dismiss()
-            }
-        }
-    }
-    
-    private func findTopViewController() -> UIViewController? {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first,
-              let rootVC = window.rootViewController else {
-            return nil
-        }
-        
-        var topVC = rootVC
-        while let presented = topVC.presentedViewController {
-            topVC = presented
-        }
-        return topVC
     }
 }
 
@@ -235,7 +145,7 @@ private struct SelectorRow: View {
                 imageFor(iconName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 24, height: 24)
+                    .frame(width: 20, height: 20)
             }
             
             Text(title)
@@ -278,7 +188,7 @@ struct SelectorView_Previews: PreviewProvider {
         ]
         
         if #available(iOS 15.0, *) {
-            DejavuSelectorView(
+            SelectorView(
                 items: items,
                 selected: items[2],
                 title: "Select Fruit",
