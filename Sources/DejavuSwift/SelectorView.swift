@@ -20,6 +20,8 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     let onSelection: (Item) -> Void
     
+    let searchable: Bool
+    
     let searchFilter: ((Item, String) -> Bool)?
     
     let searchPlaceholder: String
@@ -53,6 +55,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         titleBlock: @escaping (Item) -> String,
         iconBlock: ((Item) -> String?)? = nil,
         leftIconBlock: ((Item) -> String?)? = nil,
+        searchable: Bool = true,
         searchFilter: ((Item, String) -> Bool)? = nil,
         searchPlaceholder: String? = nil,
         selectedRowColor: Color? = nil,
@@ -64,6 +67,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         self.titleBlock = titleBlock
         self.iconBlock = iconBlock
         self.leftIconBlock = leftIconBlock
+        self.searchable = searchable
         self.searchFilter = searchFilter
         self.searchPlaceholder = searchPlaceholder ?? __("search")
         self.selectedRowColor = selectedRowColor ?? .blue
@@ -83,7 +87,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: searchPlaceholder)
+            .searchableIf(searchable, text: $searchText, prompt: searchPlaceholder)
         }
     }
     
@@ -165,6 +169,20 @@ private struct SelectorRow: View {
         .listRowBackground(isSelected ? selectedRowColor.opacity(0.1) : Color.clear)
     }
 }
+
+// MARK: - Helpers
+extension View {
+    @ViewBuilder
+    @available(iOS 15.0, *)
+    func searchableIf(_ condition: Bool, text: Binding<String>, placement: SearchFieldPlacement = .automatic, prompt: String) -> some View {
+        if condition {
+            self.searchable(text: text, placement: placement, prompt: prompt)
+        } else {
+            self
+        }
+    }
+}
+
 
 // MARK: - Preview Helpers
 struct PreviewItem: Equatable, Identifiable {
