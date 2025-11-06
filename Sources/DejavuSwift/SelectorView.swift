@@ -124,7 +124,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         self.leftIconBlock = leftIconBlock
         self.searchable = searchable
         self.searchFilter = searchFilter
-        self.searchPlaceholder = searchPlaceholder ?? __("search")
+        self.searchPlaceholder = searchPlaceholder ?? Dejavu.trans("search")
         self.selectedRowColor = selectedRowColor ?? .blue
         self.onSelection = onSelection
     }
@@ -172,7 +172,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
                 .font(.system(size: 48))
                 .foregroundColor(.gray.opacity(0.5))
             
-            Text(__("noResults"))
+            Text(Dejavu.trans("noResults"))
                 .font(.headline)
                 .foregroundColor(.secondary)
         }
@@ -193,7 +193,7 @@ private struct SelectorRow: View {
     var body: some View {
         HStack(spacing: 12) {
             if let leftIconName {
-                imageFor(leftIconName)
+                Dejavu.imageFor(leftIconName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 16, height: 16)
@@ -201,7 +201,7 @@ private struct SelectorRow: View {
             }
             
             if let iconName {
-                imageFor(iconName)
+                Dejavu.imageFor(iconName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)

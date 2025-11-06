@@ -62,7 +62,7 @@ class Popover: NSObject {
     }
     
     @objc func addBlur() {
-        guard isIpad() else { return }
+        guard Dejavu.isIpad() else { return }
         
         let blurEffect = UIBlurEffect(style: .dark)
         blurView = UIVisualEffectView(effect: blurEffect)
