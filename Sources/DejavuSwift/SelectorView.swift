@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import RevoFoundation
 
 @available(iOS 15.0, *)
 public struct SelectorView<Item: Equatable & Identifiable>: View {
@@ -18,7 +19,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     let leftIconBlock: ((Item) -> String?)?
     
-    let onSelection: (Item) -> Void
+    @MainActor let onSelection: (Item) -> Void
     
     let searchable: Bool
     
@@ -45,6 +46,60 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         
         return allItems.filter {
             titleBlock($0).lowercased().contains(searchText.lowercased())
+        }
+    }
+    
+    @MainActor
+    public static func show(
+        items: [Item],
+        selected: Item? = nil,
+        title: String,
+        titleBlock: @escaping (Item) -> String,
+        iconBlock: ((Item) -> String?)? = nil,
+        leftIconBlock: ((Item) -> String?)? = nil,
+        searchable: Bool = true,
+        searchFilter: ((Item, String) -> Bool)? = nil,
+        searchPlaceholder: String? = nil,
+        parent: UIViewController,
+        from: UIView? = nil,
+        blurred: Bool = true
+    ) async -> Item? {
+        await withCheckedContinuation { continuation in
+            Task { @MainActor in
+                var vc: UIViewController!
+                var hasResumed = false
+                
+                vc = UIHostingController(rootView: SelectorView(
+                        items: items,
+                        selected: selected,
+                        title: title,
+                        titleBlock: titleBlock,
+                        iconBlock: iconBlock,
+                        leftIconBlock: leftIconBlock,
+                        searchable: searchable,
+                        searchFilter: searchFilter,
+                        searchPlaceholder: searchPlaceholder,
+                        onSelection: { selected in
+                            Task { @MainActor in
+                                guard !hasResumed else { return }
+                                hasResumed = true
+                                continuation.resume(returning: selected)
+                                vc?.dismiss(animated: true) {
+                                    PopoverEvent.fire(.EVENT_POPUP_DISMISSED)
+                                }
+                            }
+                        }
+                    )
+                )
+                vc.title = title
+                vc.preferredContentSize = CGSize(width: 300, height: 600)
+                
+                if blurred {
+                    await Popover.showBlurred(vc, parent: parent, from: from)
+                } else {
+                    await Popover.show(vc, parent: parent, from: from)
+                }
+            }
         }
     }
     
