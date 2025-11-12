@@ -21,40 +21,37 @@ class Popover: NSObject {
     static let ANIMATION_DURATION = 0.1
     static let BLUR_OPACTITY = 0.6
     
-    static func preventDismiss() {
-        PopoverEvent.fire(.EVENT_POPUP_CAN_DISMISS, object: false)
-    }
-    
-    static func allowDismiss() {
-        PopoverEvent.fire(.EVENT_POPUP_CAN_DISMISS, object: true)
-    }
-    
-    static func show(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, arrowColor: UIColor? = nil, permittedArrowDirections: UIPopoverArrowDirection = .any, delegate: UIPopoverPresentationControllerDelegate? = nil) async {
-        let popover = Popover.make(vc, parent: parent, from: from, arrowColor: arrowColor, delegate: delegate)
-        await popover.show(permittedArrowDirections) {
-            popover.dumbToKeepRetained()
-        }
-    }
-    
-    static func showBlurred(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, arrowColor: UIColor? = nil, permittedArrowDirections: UIPopoverArrowDirection = .any, delegate: UIPopoverPresentationControllerDelegate? = nil) async {
-        let popover = Popover.make(vc, parent: parent, from: from, arrowColor: arrowColor, delegate: delegate)
-        popover.shouldBlur = true
-        await popover.show(permittedArrowDirections) {
-            popover.dumbToKeepRetained()
-        }
-    }
-    
-    static func make(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, arrowColor: UIColor? = nil, delegate: UIPopoverPresentationControllerDelegate? = nil) -> Popover {
+    static func show(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, blurred: Bool = false, arrowColor: UIColor? = nil, canDismissOnTouchOutside: Bool = true, permittedArrowDirections: UIPopoverArrowDirection = .any, delegate: UIPopoverPresentationControllerDelegate? = nil) async {
         let popover = Popover()
         popover.delegate = delegate
         popover.parentVC = parent
         popover.vc = vc
         popover.arrowColor = arrowColor
         popover.fromView = from
-        popover.canDismissOnTouchOutside = true
+        popover.canDismissOnTouchOutside = canDismissOnTouchOutside && Dejavu.isIpad()
+        popover.shouldBlur = blurred
         PopoverEvent.listen(.EVENT_POPUP_DISMISSED, target: popover, selector: #selector(removeBlur))
-        PopoverEvent.listen(.EVENT_POPUP_CAN_DISMISS, target: popover, selector: #selector(canDismiss))
-        return popover
+        
+        await popover.present(permittedArrowDirections) {
+            popover.dumbToKeepRetained()
+        }
+    }
+    
+    func present(_ directions: UIPopoverArrowDirection, then: @escaping () -> Void) async {
+        self.then = then
+        await MainActor.run {
+            self.vc?.modalPresentationStyle = .popover
+            self.parentVC?.present(self.vc, animated: true)
+            
+            let popoverController = self.vc.popoverPresentationController
+            popoverController?.permittedArrowDirections = directions
+            if let color = self.arrowColor {
+                popoverController?.backgroundColor = color
+            }
+            popoverController?.delegate = self
+            popoverController?.sourceView = self.fromView
+            if self.shouldBlur ?? false { self.addBlur() }
+        }
     }
     
     func dumbToKeepRetained() {
@@ -87,32 +84,9 @@ class Popover: NSObject {
         }
     }
     
-    @objc func canDismiss(_ notification: NSNotification) {
-        canDismissOnTouchOutside = (notification.object as? Bool) ?? false
-    }
-    
-    func show(_ directions: UIPopoverArrowDirection, then: @escaping () -> Void) async {
-        self.then = then
-        await MainActor.run {
-            self.vc?.modalPresentationStyle = .popover
-            self.parentVC?.present(self.vc, animated: true)
-            
-            let popoverController = self.vc.popoverPresentationController
-            popoverController?.permittedArrowDirections = directions
-            if let color = self.arrowColor {
-                popoverController?.backgroundColor = color
-            }
-            popoverController?.delegate = self
-            popoverController?.sourceView = self.fromView
-            //popoverController?.sourceRect = self.fromView?.bounds
-            if self.shouldBlur ?? false { self.addBlur() }
-        }
-    }
-    
     @MainActor
     deinit {
         PopoverEvent.remove(.EVENT_POPUP_DISMISSED, target: self)
-        PopoverEvent.remove(.EVENT_POPUP_CAN_DISMISS, target: self)
         then = nil
         blurView = nil
     }
@@ -133,7 +107,6 @@ extension Popover: UIPopoverPresentationControllerDelegate {
 }
 
 extension Notification.Name {
-    static let EVENT_POPUP_CAN_DISMISS = Notification.Name("event.candismiss.popup")
     static let EVENT_POPUP_DISMISSED   = Notification.Name("event.dismiss.popup")
     
 }

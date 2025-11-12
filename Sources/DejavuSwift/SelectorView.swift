@@ -19,7 +19,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     let leftIconBlock: ((Item) -> String?)?
     
-    @MainActor let onSelection: (Item) -> Void
+    @MainActor let onSelection: (Item?) -> Void
     
     let searchable: Bool
     
@@ -29,6 +29,8 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     let selectedRowColor: Color
     
+    let showBackButton: Bool
+        
     // MARK: - State
     
     @State private var searchText: String = ""
@@ -62,12 +64,15 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         searchPlaceholder: String? = nil,
         parent: UIViewController,
         from: UIView? = nil,
-        blurred: Bool = true
+        blurred: Bool = true,
+        disableDismiss: Bool = false, // It is always disabled on iPhone
+        preferredSize: CGSize? = nil
     ) async -> Item? {
         await withCheckedContinuation { continuation in
             Task { @MainActor in
                 var vc: UIViewController!
-                var hasResumed = false
+                
+                let showBackButton = !Dejavu.isIpad() || disableDismiss
                 
                 vc = UIHostingController(rootView: SelectorView(
                         items: items,
@@ -79,26 +84,31 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
                         searchable: searchable,
                         searchFilter: searchFilter,
                         searchPlaceholder: searchPlaceholder,
+                        showBackButton: showBackButton,
                         onSelection: { selected in
-                            Task { @MainActor in
-                                guard !hasResumed else { return }
-                                hasResumed = true
-                                continuation.resume(returning: selected)
+                            if vc?.isSimplePopup ?? true {
                                 vc?.dismiss(animated: true) {
-                                    PopoverEvent.fire(.EVENT_POPUP_DISMISSED)
+                                    Task { @MainActor in
+                                        PopoverEvent.fire(.EVENT_POPUP_DISMISSED)
+                                        continuation.resume(returning: selected)
+                                    }
                                 }
+                                return
                             }
+                            vc.navigationController?.popViewController(animated: true)
+                            Task { @MainActor in
+                                continuation.resume(returning: selected)
+                            }
+                            
                         }
-                    )
+                    ).interactiveDismissDisabled(showBackButton)
                 )
                 vc.title = title
-                vc.preferredContentSize = CGSize(width: 300, height: 600)
-                
-                if blurred {
-                    await Popover.showBlurred(vc, parent: parent, from: from)
-                } else {
-                    await Popover.show(vc, parent: parent, from: from)
+                if let preferredSize {
+                    vc.preferredContentSize = preferredSize
                 }
+                
+                await Popover.show(vc, parent: parent, from: from, blurred: blurred, canDismissOnTouchOutside: !showBackButton)
             }
         }
     }
@@ -114,7 +124,8 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         searchFilter: ((Item, String) -> Bool)? = nil,
         searchPlaceholder: String? = nil,
         selectedRowColor: Color? = nil,
-        onSelection: @escaping (Item) -> Void
+        showBackButton: Bool = false,
+        onSelection: @escaping (Item?) -> Void
     ) {
         self.allItems = items
         self.selectedItem = selected
@@ -126,6 +137,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         self.searchFilter = searchFilter
         self.searchPlaceholder = searchPlaceholder ?? Dejavu.trans("search")
         self.selectedRowColor = selectedRowColor ?? .blue
+        self.showBackButton = showBackButton
         self.onSelection = onSelection
     }
     
@@ -142,7 +154,20 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .searchableIf(searchable, text: $searchText, prompt: searchPlaceholder)
+            .if(searchable) {
+                $0.searchable(text: $searchText, prompt: searchPlaceholder)
+            }
+            .if(showBackButton) { view in
+                view.toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(action: {
+                            onSelection(nil)
+                        }) {
+                            Text(Dejavu.trans("back"))
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -228,13 +253,18 @@ private struct SelectorRow: View {
 // MARK: - Helpers
 extension View {
     @ViewBuilder
-    @available(iOS 15.0, *)
-    func searchableIf(_ condition: Bool, text: Binding<String>, placement: SearchFieldPlacement = .automatic, prompt: String) -> some View {
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
         if condition {
-            self.searchable(text: text, placement: placement, prompt: prompt)
+            transform(self)
         } else {
             self
         }
+    }
+}
+
+extension UIViewController {
+    var isSimplePopup : Bool {
+        navigationController?.children.count ?? 1 == 1
     }
 }
 
@@ -268,7 +298,7 @@ struct SelectorView_Previews: PreviewProvider {
                 titleBlock: { $0.name },
                 iconBlock: { $0.iconName },
                 onSelection: {
-                    print("Selected: \($0.name)")
+                    print("Selected: \($0?.name ?? "nil")")
                 }
             )
         }
