@@ -200,7 +200,6 @@ extension View {
 }
 
 
-// MARK: - Preview Helpers
 struct PreviewItem: Equatable, Identifiable {
     let id: Int
     let name: String
@@ -211,28 +210,26 @@ struct PreviewItem: Equatable, Identifiable {
     }
 }
 
-struct SelectorView_Previews: PreviewProvider {
-    static var previews: some View {
-        let items: [PreviewItem] = [
-            PreviewItem(id: 1, name: "Apple", iconName: "apple.logo"),
-            PreviewItem(id: 2, name: "Banana", iconName: nil),
-            PreviewItem(id: 3, name: "Cherry", iconName: "leaf.fill"),
-            PreviewItem(id: 4, name: "Date", iconName: nil),
-            PreviewItem(id: 5, name: "Elderberry", iconName: "star.fill")
-        ]
-        
-        if #available(iOS 15.0, *) {
-            SelectorView(
-                items: items,
-                selected: items[2],
-                title: "Select Fruit",
-                titleBlock: { $0.name },
-                iconBlock: { $0.iconName },
-                onSelection: {
-                    print("Selected: \($0?.name ?? "nil")")
-                }
-            )
-        }
+#Preview {
+    let items: [PreviewItem] = [
+        PreviewItem(id: 1, name: "Car",        iconName: "car"),
+        PreviewItem(id: 2, name: "Bus",        iconName: "bus"),
+        PreviewItem(id: 3, name: "Airplane",   iconName: "airplane"),
+        PreviewItem(id: 4, name: "Bicycle",    iconName: "bicycle"),
+        PreviewItem(id: 5, name: "Motorcycle", iconName: "motorcycle.fill")
+    ]
+    
+    if #available(iOS 15.0, *) {
+        SelectorView(
+            items: items,
+            selected: items[2],
+            title: "Select Vehicle",
+            titleBlock: { $0.name },
+            iconBlock: { $0.iconName },
+            onSelection: {
+                print("Selected: \($0?.name ?? "nil")")
+            }
+        )
     }
 }
 
