@@ -8,22 +8,22 @@ class Popover: NSObject {
     weak var vc: UIViewController!
     weak var fromView: UIView?
     weak var arrowColor: UIColor?
-    weak var delegate: UIPopoverPresentationControllerDelegate?
     
     var shouldBlur: Bool?
     
     var canDismissOnTouchOutside: Bool?
     
     var then: (() -> Void)?
+    var onDismissTouchingOutside: (() -> Void)?
     
     var blurView: UIVisualEffectView!
     
     static let ANIMATION_DURATION = 0.1
     static let BLUR_OPACTITY = 0.6
     
-    static func show(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, blurred: Bool = false, arrowColor: UIColor? = nil, canDismissOnTouchOutside: Bool = true, permittedArrowDirections: UIPopoverArrowDirection = .any, delegate: UIPopoverPresentationControllerDelegate? = nil) async {
+    static func show(_ vc: UIViewController, parent: UIViewController, from: UIView? = nil, blurred: Bool = false, arrowColor: UIColor? = nil, canDismissOnTouchOutside: Bool = true, permittedArrowDirections: UIPopoverArrowDirection = .any, onDismissTouchingOutside: (() -> Void)? = nil) async {
         let popover = Popover()
-        popover.delegate = delegate
+        popover.onDismissTouchingOutside = onDismissTouchingOutside
         popover.parentVC = parent
         popover.vc = vc
         popover.arrowColor = arrowColor
@@ -37,7 +37,7 @@ class Popover: NSObject {
         }
     }
     
-    func present(_ directions: UIPopoverArrowDirection, then: @escaping () -> Void) async {
+    func present(_ directions: UIPopoverArrowDirection, then: (() -> Void)?) async {
         self.then = then
         await MainActor.run {
             self.vc?.modalPresentationStyle = .popover
@@ -80,6 +80,7 @@ class Popover: NSObject {
             self?.blurView?.alpha = 0
         }) { [weak self] _ in
             self?.blurView?.removeFromSuperview()
+            self?.onDismissTouchingOutside = nil
             self?.then = nil
         }
     }
@@ -88,6 +89,7 @@ class Popover: NSObject {
     deinit {
         PopoverEvent.remove(.EVENT_POPUP_DISMISSED, target: self)
         then = nil
+        onDismissTouchingOutside = nil
         blurView = nil
     }
     
@@ -97,7 +99,8 @@ extension Popover: UIPopoverPresentationControllerDelegate {
     
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         removeBlur()
-        delegate?.presentationControllerDidDismiss?(presentationController)
+        onDismissTouchingOutside?()
+        onDismissTouchingOutside = nil
         then = nil
     }
     

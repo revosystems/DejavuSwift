@@ -108,7 +108,9 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
                     vc.preferredContentSize = preferredSize
                 }
                 
-                await Popover.show(vc, parent: parent, from: from, blurred: blurred, canDismissOnTouchOutside: !showBackButton)
+                await Popover.show(vc, parent: parent, from: from, blurred: blurred, canDismissOnTouchOutside: !showBackButton) {
+                    continuation.resume(returning: nil)
+                }
             }
         }
     }
