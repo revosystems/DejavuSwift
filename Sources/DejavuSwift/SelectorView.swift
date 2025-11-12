@@ -1,6 +1,5 @@
 import SwiftUI
 import UIKit
-import RevoFoundation
 
 @available(iOS 15.0, *)
 public struct SelectorView<Item: Equatable & Identifiable>: View {
