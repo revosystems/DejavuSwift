@@ -50,70 +50,6 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         }
     }
     
-    @MainActor
-    public static func show(
-        items: [Item],
-        selected: Item? = nil,
-        title: String,
-        titleBlock: @escaping (Item) -> String,
-        iconBlock: ((Item) -> String?)? = nil,
-        leftIconBlock: ((Item) -> String?)? = nil,
-        searchable: Bool = true,
-        searchFilter: ((Item, String) -> Bool)? = nil,
-        searchPlaceholder: String? = nil,
-        parent: UIViewController,
-        from: UIView? = nil,
-        blurred: Bool = true,
-        disableDismiss: Bool = false, // It is always disabled on iPhone
-        preferredSize: CGSize? = nil
-    ) async -> Item? {
-        await withCheckedContinuation { continuation in
-            Task { @MainActor in
-                var vc: UIViewController!
-                
-                let showBackButton = !Dejavu.isIpad() || disableDismiss
-                
-                vc = UIHostingController(rootView: SelectorView(
-                        items: items,
-                        selected: selected,
-                        title: title,
-                        titleBlock: titleBlock,
-                        iconBlock: iconBlock,
-                        leftIconBlock: leftIconBlock,
-                        searchable: searchable,
-                        searchFilter: searchFilter,
-                        searchPlaceholder: searchPlaceholder,
-                        showBackButton: showBackButton,
-                        onSelection: { selected in
-                            if vc?.isSimplePopup ?? true {
-                                vc?.dismiss(animated: true) {
-                                    Task { @MainActor in
-                                        PopoverEvent.fire(.EVENT_POPUP_DISMISSED)
-                                        continuation.resume(returning: selected)
-                                    }
-                                }
-                                return
-                            }
-                            vc.navigationController?.popViewController(animated: true)
-                            Task { @MainActor in
-                                continuation.resume(returning: selected)
-                            }
-                            
-                        }
-                    ).interactiveDismissDisabled(showBackButton)
-                )
-                vc.title = title
-                if let preferredSize {
-                    vc.preferredContentSize = preferredSize
-                }
-                
-                await Popover.show(vc, parent: parent, from: from, blurred: blurred, canDismissOnTouchOutside: !showBackButton) {
-                    continuation.resume(returning: nil)
-                }
-            }
-        }
-    }
-    
     public init(
         items: [Item],
         selected: Item? = nil,
@@ -260,12 +196,6 @@ extension View {
         } else {
             self
         }
-    }
-}
-
-extension UIViewController {
-    var isSimplePopup : Bool {
-        navigationController?.children.count ?? 1 == 1
     }
 }
 
