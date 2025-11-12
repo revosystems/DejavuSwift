@@ -57,4 +57,17 @@ public class Dejavu {
     public static func image(_ name:String) -> Image? {
         Image(name, bundle: self.bundle)
     }
+    
+    static func trans(_ key: String) -> String{
+        let language = UserDefaults.standard.string(forKey: "language") ?? "en"
+        return NSLocalizedString(key, tableName: language, comment: "")
+    }
+    
+    static func imageFor(_ name: String) -> Image {
+        let uiImage = UIImage(systemName: name) ??
+        UIImage(named: name, in: Dejavu.bundle, with: nil) ??
+        UIImage(named: name) ??
+        UIImage()
+        return Image(uiImage: uiImage).renderingMode(.template)
+    }
 }
