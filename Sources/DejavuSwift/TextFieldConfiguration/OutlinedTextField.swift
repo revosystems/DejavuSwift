@@ -1,6 +1,7 @@
 import SwiftUI
 import Foundation
 
+@available(iOS 15.0, *)
 public struct OutlinedTextFieldStyle: TextFieldStyle {
     
     @State var icon: Image?
