@@ -84,9 +84,17 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         NavigationView {
             VStack(spacing: 0) {
                 if filteredItems.isEmpty {
-                    emptyStateView
+                    EmptyContentView(
+                        icon: "magnifyingglass",
+                        text: Dejavu.trans("noResults")
+                    ) {}
                 } else {
-                    itemsList
+                    if #available(iOS 16.4, *) {
+                        itemsList
+                            .scrollBounceBehavior(.basedOnSize)
+                    } else {
+                        itemsList
+                    }
                 }
             }
             .navigationTitle(title)
@@ -126,20 +134,6 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
             }
         }
         .listStyle(.plain)
-    }
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(.gray.opacity(0.5))
-            
-            Text(Dejavu.trans("noResults"))
-                .font(.headline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 }
 
