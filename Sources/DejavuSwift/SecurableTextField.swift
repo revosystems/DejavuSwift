@@ -6,6 +6,7 @@ final class SecureEntryTextField: UITextField, UITextFieldDelegate {
     
     var onReturn: (() -> Void)?
     var onTextChange: ((String) -> Void)?
+    var onFocusChange: ((Bool) -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -20,6 +21,14 @@ final class SecureEntryTextField: UITextField, UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         onReturn?()
         return true
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        onFocusChange?(true)
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        onFocusChange?(false)
     }
     
     // Prevents text from being cleared when toggling isSecureTextEntry
@@ -129,6 +138,8 @@ private struct TextFieldRepresentable: UIViewRepresentable {
             isFocused = false
             onSubmit()
         }
+        textField.onFocusChange = { isFocused = $0 }
+        
         return textField
     }
     
