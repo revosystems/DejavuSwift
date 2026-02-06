@@ -31,6 +31,10 @@ final class SecureEntryTextField: UITextField, UITextFieldDelegate {
         onFocusChange?(false)
     }
     
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: super.intrinsicContentSize.height)
+    }
+    
     // Prevents text from being cleared when toggling isSecureTextEntry
     // Source: https://stackoverflow.com/questions/7305538/uitextfield-with-secure-entry-always-getting-cleared-before-editing
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
