@@ -46,7 +46,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         }
         
         return allItems.filter {
-            titleBlock($0).lowercased().contains(searchText.lowercased())
+            titleBlock($0).localizedStandardContains(searchText)
         }
     }
     
@@ -82,7 +82,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     
     public var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            Group {
                 if filteredItems.isEmpty {
                     EmptyContentView(
                         icon: "magnifyingglass",
