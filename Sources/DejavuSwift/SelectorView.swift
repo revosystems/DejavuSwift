@@ -89,12 +89,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
                         text: Dejavu.trans("noResults")
                     ) {}
                 } else {
-                    if #available(iOS 16.4, *) {
-                        itemsList
-                            .scrollBounceBehavior(.basedOnSize)
-                    } else {
-                        itemsList
-                    }
+                    itemsList
                 }
             }
             .navigationTitle(title)
