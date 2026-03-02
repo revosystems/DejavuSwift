@@ -29,6 +29,8 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     let selectedRowColor: Color
     
     let showBackButton: Bool
+    
+    let nilOptionTitle: String?
         
     // MARK: - State
     
@@ -57,6 +59,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         titleBlock: @escaping (Item) -> String,
         iconBlock: ((Item) -> String?)? = nil,
         leftIconBlock: ((Item) -> String?)? = nil,
+        nilOptionTitle: String? = nil,
         searchable: Bool = true,
         searchFilter: ((Item, String) -> Bool)? = nil,
         searchPlaceholder: String? = nil,
@@ -70,6 +73,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
         self.titleBlock = titleBlock
         self.iconBlock = iconBlock
         self.leftIconBlock = leftIconBlock
+        self.nilOptionTitle = nilOptionTitle
         self.searchable = searchable
         self.searchFilter = searchFilter
         self.searchPlaceholder = searchPlaceholder ?? Dejavu.trans("search")
@@ -83,7 +87,7 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     public var body: some View {
         NavigationView {
             Group {
-                if filteredItems.isEmpty {
+                if filteredItems.isEmpty && nilOptionTitle == nil {
                     EmptyContentView(
                         icon: "magnifyingglass",
                         text: Dejavu.trans("noResults")
@@ -114,18 +118,33 @@ public struct SelectorView<Item: Equatable & Identifiable>: View {
     // MARK: - Subviews
     
     private var itemsList: some View {
-        List(filteredItems) { item in
-            let isSelected = item == selectedItem
-            SelectorRow(
-                title: titleBlock(item),
-                iconName: iconBlock?(item),
-                leftIconName: leftIconBlock?(item),
-                isSelected: isSelected,
-                selectedRowColor: selectedRowColor
-            )
-            .onTapGesture {
-                selectedItem = item
-                onSelection(item)
+        List {
+            if let nilOptionTitle {
+                SelectorRow(
+                    title: nilOptionTitle,
+                    iconName: nil,
+                    leftIconName: nil,
+                    isSelected: selectedItem == nil,
+                    selectedRowColor: selectedRowColor
+                )
+                .onTapGesture {
+                    selectedItem = nil
+                    onSelection(nil)
+                }
+            }
+            ForEach(filteredItems) { item in
+                let isSelected = item == selectedItem
+                SelectorRow(
+                    title: titleBlock(item),
+                    iconName: iconBlock?(item),
+                    leftIconName: leftIconBlock?(item),
+                    isSelected: isSelected,
+                    selectedRowColor: selectedRowColor
+                )
+                .onTapGesture {
+                    selectedItem = item
+                    onSelection(item)
+                }
             }
         }
         .listStyle(.plain)
