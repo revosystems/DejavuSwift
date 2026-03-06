@@ -164,3 +164,60 @@ private struct TextFieldRepresentable: UIViewRepresentable {
         }
     }
 }
+
+#Preview {
+    struct Preview: View {
+        @State private var searchText: String = ""
+        @State private var password: String = ""
+        @State private var email: String = ""
+        @State private var isFocusedSearch: Bool = false
+        @State private var isFocusedPassword: Bool = false
+        @State private var isFocusedEmail: Bool = false
+        
+        var isValidEmail: Bool {
+            let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+            let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+            return emailPred.evaluate(with: password)
+        }
+        
+        var body: some View {
+            ScrollView {
+                VStack(spacing: 50) {
+                    SecurableTextField(
+                        text: $searchText,
+                        placeholder: "Search...",
+                        isFocused: $isFocusedSearch,
+                        onSubmit: {
+                            print("Searching...")
+                        }
+                    )
+                    
+                    SecurableTextField(
+                        text: $password,
+                        placeholder: "Enter password",
+                        isFocused: $isFocusedPassword,
+                        onSubmit: {
+                            print("Authenticating...")
+                        },
+                        shouldSecure: {
+                            password.count > 6
+                        }
+                    )
+                    
+                    SecurableTextField(
+                        text: $email,
+                        placeholder: "Enter email",
+                        isFocused: $isFocusedEmail,
+                        onSubmit: {
+                            print("Submitting email...")
+                        },
+                        isValid: isValidEmail
+                    )
+                }
+                .frame(maxWidth: 300)
+                .padding()
+            }
+        }
+    }
+    return Preview()
+}
