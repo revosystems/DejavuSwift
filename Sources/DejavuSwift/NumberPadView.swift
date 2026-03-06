@@ -199,27 +199,40 @@ public struct NumberPadView: View {
 
 #Preview {
     struct Preview: View {
-        @State var value1: Double = 12.34
-        @State var value2: Double = 2
-        @State var value3: Double = 4
-        
         var body: some View {
             ScrollView {
-                VStack {
-                    Text("Mode Price")
-                    NumberPadView(value: $value1, mode: .price, maxDigits: 10) { value in }
-                    
-                    Divider()
-                    
-                    Text("Mode Decimals")
-                    NumberPadView(value: $value2, mode: .decimal, maxDigits: 10) { value in }
-                    
-                    Divider()
-                    
-                    Text("Mode Enters")
-                    NumberPadView(value: $value3, mode: .integer, maxDigits: 10) { value in }
-                }.padding()
+                // Integer mode
+                NumberPadWrapper(mode: .integer, maxDigits: 5)
+                
+                // Price mode
+                NumberPadWrapper(mode: .price)
+                
+                // Decimal mode
+                NumberPadWrapper(mode: .decimal)
+                
+                // With confirm action
+                NumberPadWrapper(mode: .price, confirm: { value in
+                    print("Tip entered: \(value)")
+                })
             }
+            .frame(maxWidth: 300)
+        }
+    }
+    
+    struct NumberPadWrapper: View {
+        @State var value: Double = 0
+        let mode: NumberPadMode
+        let maxDigits: Int?
+        let confirm: ((Double)->Void)?
+        
+        init(mode: NumberPadMode = .integer, maxDigits: Int? = nil, confirm: ((Double)->Void)? = nil) {
+            self.mode = mode
+            self.maxDigits = maxDigits
+            self.confirm = confirm
+        }
+        
+        var body: some View {
+            NumberPadView(value: $value, mode: mode, maxDigits: maxDigits, confirm: confirm)
         }
     }
     return Preview()

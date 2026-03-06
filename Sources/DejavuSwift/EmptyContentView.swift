@@ -53,3 +53,37 @@ public struct EmptyContentView<AdditionalContent: View>: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+
+#Preview {
+    EmptyContentView(
+        icon: "magnifyingglass",
+        text: "No results found"
+    ) {}
+        .frame(maxWidth: 250, maxHeight: 250)
+        .border(.black)
+    
+    EmptyContentView(
+        icon: "radiowaves.right",
+        text: "No profile found for bracelet",
+        additionalText: "1234******5678"
+    ) {}
+    .frame(maxWidth: 250, maxHeight: 250)
+    .border(.black)
+    
+    EmptyContentView(
+        icon: "bed.double.fill",
+        text: "Search room or bracelet"
+    ) {
+        Button(action: {
+            // Handle scan action
+        }) {
+            HStack {
+                Image(systemName: "radiowaves.right")
+                Text("Scan Bracelet")
+            }
+        }
+    }
+    .frame(maxWidth: 250, maxHeight: 250)
+    .border(.black)
+}

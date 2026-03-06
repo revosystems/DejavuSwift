@@ -29,7 +29,7 @@ public struct AdaptiveStack<Content: View>: View {
 
 #Preview {
     AdaptiveStack {
-        Text("On iPad this will be horizontal stack")
+        Text("On iPad this will be a horizontal stack")
         Text("However")
         Text("On iPhone it will be vertical")
     }
