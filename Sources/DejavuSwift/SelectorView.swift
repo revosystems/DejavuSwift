@@ -208,36 +208,133 @@ extension View {
 }
 
 
-struct PreviewItem: Equatable, Identifiable {
-    let id: Int
+struct PreviewCountry: Equatable, Identifiable {
+    let id: String
     let name: String
-    let iconName: String?
     
-    static func == (lhs: PreviewItem, rhs: PreviewItem) -> Bool {
+    static func == (lhs: PreviewCountry, rhs: PreviewCountry) -> Bool {
         lhs.id == rhs.id
     }
 }
 
-#Preview {
-    let items: [PreviewItem] = [
-        PreviewItem(id: 1, name: "Car",        iconName: "car"),
-        PreviewItem(id: 2, name: "Bus",        iconName: "bus"),
-        PreviewItem(id: 3, name: "Airplane",   iconName: "airplane"),
-        PreviewItem(id: 4, name: "Bicycle",    iconName: "bicycle"),
-        PreviewItem(id: 5, name: "Motorcycle", iconName: "motorcycle.fill")
-    ]
+struct PreviewVehicle: Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let iconName: String
+    let flagIcon: String?
     
-    if #available(iOS 15.0, *) {
-        SelectorView(
-            items: items,
-            selected: items[2],
-            title: "Select Vehicle",
-            titleBlock: { $0.name },
-            iconBlock: { $0.iconName },
-            onSelection: {
-                print("Selected: \($0?.name ?? "nil")")
+    static func == (lhs: PreviewVehicle, rhs: PreviewVehicle) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+struct PreviewCategory: Equatable, Identifiable {
+    let id: Int
+    let name: String
+    
+    static func == (lhs: PreviewCategory, rhs: PreviewCategory) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+struct PreviewProduct: Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let code: String
+    let description: String
+    
+    static func == (lhs: PreviewProduct, rhs: PreviewProduct) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+@available(iOS 15.0, *)
+struct Preview: View {
+    @State private var selectedCountry: PreviewCountry? = PreviewCountry(id: "us", name: "United States")
+    @State private var selectedVehicle: PreviewVehicle? = PreviewVehicle(id: 3, name: "Airplane", iconName: "airplane", flagIcon: "flag")
+    @State private var selectedProduct: PreviewProduct? = nil
+    @State private var selectedCategory: PreviewCategory? = nil
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                SelectorView(
+                    items: [
+                        PreviewCountry(id: "us", name: "United States"),
+                        PreviewCountry(id: "uk", name: "United Kingdom"),
+                        PreviewCountry(id: "cat", name: "Catalonia")
+                    ],
+                    selected: selectedCountry,
+                    title: "Select Country",
+                    titleBlock: { $0.name },
+                    onSelection: { country in
+                        selectedCountry = country
+                    }
+                )
+                
+                .frame(height: 300)
+                
+                SelectorView(
+                    items: [
+                        PreviewVehicle(id: 1, name: "Car", iconName: "car", flagIcon: "environments"),
+                        PreviewVehicle(id: 2, name: "Bus", iconName: "bus", flagIcon: "environments"),
+                        PreviewVehicle(id: 3, name: "Airplane", iconName: "airplane", flagIcon: "wind")
+                    ],
+                    selected: selectedVehicle,
+                    title: "Select Vehicle",
+                    titleBlock: { $0.name },
+                    iconBlock: { $0.iconName },
+                    leftIconBlock: { $0.flagIcon },
+                    onSelection: { vehicle in
+                        selectedVehicle = vehicle
+                    }
+                )
+                .frame(height: 300)
+                
+                SelectorView(
+                    items: [
+                        PreviewProduct(id: 1, name: "Widget", code: "W001", description: "A small widget"),
+                        PreviewProduct(id: 2, name: "Gadget", code: "G002", description: "A large gadget")
+                    ],
+                    selected: selectedProduct,
+                    title: "Select Product",
+                    titleBlock: { $0.name },
+                    searchFilter: { product, searchText in
+                        product.name.localizedCaseInsensitiveContains(searchText) ||
+                        product.code.localizedCaseInsensitiveContains(searchText) ||
+                        product.description.localizedCaseInsensitiveContains(searchText)
+                    },
+                    onSelection: { product in
+                        selectedProduct = product
+                    }
+                )
+                .frame(height: 300)
+                
+                SelectorView(
+                    items: [
+                        PreviewCategory(id: 1, name: "Electronics"),
+                        PreviewCategory(id: 2, name: "Clothing"),
+                        PreviewCategory(id: 3, name: "Food")
+                    ],
+                    selected: selectedCategory,
+                    title: "Select Category",
+                    titleBlock: { $0.name },
+                    nilOptionTitle: "None",
+                    selectedRowColor: .green,
+                    onSelection: { category in
+                        selectedCategory = category
+                    }
+                )
+                .frame(height: 300)
             }
-        )
+            .padding()
+        }
+    }
+}
+
+#Preview {
+    if #available(iOS 15.0, *) {
+        Preview()
     }
 }
 
