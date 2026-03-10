@@ -16,11 +16,8 @@ public struct NumberPadView: View {
     
     private var hasDecimalPoint: Bool { input.contains(".") }
     
-    @State private var input: String = "0" {
-        didSet {
-            value = formatValue()
-        }
-    }
+    @State private var input: String = "0"
+    @State private var isUpdating = false
     
     let columns = [
         GridItem(.flexible()),
@@ -54,6 +51,7 @@ public struct NumberPadView: View {
                 .cornerRadius(4)
                 .onAppear {
                     input = Self.formatInitialValue(value, mode: mode)
+                    applyInputChange()
                 }
             
             LazyVGrid(columns: columns, spacing: 10) {
@@ -130,6 +128,12 @@ public struct NumberPadView: View {
             .frame(maxWidth: .infinity)
             Spacer()
         }
+        .onChange(of: value) { newValue in
+            guard !isUpdating else { return }
+            isUpdating = true
+            input = Self.formatInitialValue(newValue, mode: mode)
+            isUpdating = false
+        }
     }
     
     private func addNumber(_ number: String) {
@@ -147,25 +151,15 @@ public struct NumberPadView: View {
         case .decimal:
             if number == "." && !hasDecimalPoint {
                 input += "."
-            } else {
+            } else if number != "." {
                 input += number
-                if input.contains(".") && input.components(separatedBy: ".").last?.count ?? 0 > 2 {
+                if hasDecimalPoint && input.components(separatedBy: ".").last?.count ?? 0 > 2 {
                     input = String(input.dropLast())
                 }
             }
         }
         
-        value = formatValue()
-        
-        if let minValue, value < minValue {
-            value = minValue
-            input = Self.formatInitialValue(value, mode: mode)
-        }
-        
-        if let maxValue, value > maxValue {
-            value = maxValue
-            input = Self.formatInitialValue(value, mode: mode)
-        }
+        applyInputChange()
     }
     
     private func removeNumber() {
@@ -174,14 +168,49 @@ public struct NumberPadView: View {
         } else {
             input = "0"
         }
-        value = formatValue()
+        applyInputChange()
     }
     
-    private func formatValue() -> Double {
+    private func applyInputChange() {
+        guard !isUpdating else { return }
+        isUpdating = true
+        defer { isUpdating = false }
+
+        // Parse input to value according to mode
+        var newValue: Double
         switch mode {
-        case .integer: Double(input) ?? 0
-        case .price  : (Double(input) ?? 0) / 100.0
-        case .decimal: Double(input) ?? 0.0
+        case .integer: newValue = Double(input) ?? 0
+        case .price: newValue = (Double(input) ?? 0) / 100.0
+        case .decimal: newValue = Double(input) ?? 0.0
+        }
+
+        // Clamp to bounds if needed
+        if let minValue, newValue < minValue { newValue = minValue }
+        if let maxValue, newValue > maxValue { newValue = maxValue }
+
+        // Update binding
+        value = newValue
+
+        // Ensure input string matches clamped value for each mode
+        let normalized = Self.formatInitialValue(newValue, mode: mode)
+        switch mode {
+        case .integer: input = normalized
+        case .price: input = normalized
+        case .decimal:
+            // Preserve a trailing decimal point if user just typed it
+            if hasDecimalPoint {
+                // Keep at most two fractional digits
+                let parts = input.split(separator: ".", omittingEmptySubsequences: false)
+                if parts.count == 2 {
+                    let integerPart = parts[0]
+                    let fraction = String(parts[1].prefix(2))
+                    input = fraction.isEmpty ? String(integerPart) + "." : String(integerPart) + "." + fraction
+                } else {
+                    input = normalized
+                }
+            } else {
+                input = normalized
+            }
         }
     }
     
@@ -213,8 +242,7 @@ public struct NumberPadView: View {
         } else {
             return input.count <= maxDigits + 1
         }
-    }
-    
+    }    
 }
 
 #Preview {
